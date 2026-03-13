@@ -1,0 +1,56 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: profiler
+
+  datasource:
+    url: jdbc:postgresql://localhost:5433/together?currentSchema=profiler
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        default_schema: profiler
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: false
+
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 5MB
+
+# ── MinIO / S3 (аватары) ─────────────────────────────────────────────────────
+storage:
+  endpoint: ${STORAGE_ENDPOINT:http://localhost:9000}
+  bucket: ${STORAGE_BUCKET:profiler}
+  access-key: ${STORAGE_ACCESS_KEY:minioadmin}
+  secret-key: ${STORAGE_SECRET_KEY:minioadmin}
+  region: ${STORAGE_REGION:us-east-1}
+
+# ── Invite ────────────────────────────────────────────────────────────────────
+invite:
+  # Публичный base URL для генерации ссылки-приглашения
+  base-url: ${INVITE_BASE_URL:http://localhost:3000}
+  code-length: 8
+  ttl-days: 7
+
+# ── Actuator ──────────────────────────────────────────────────────────────────
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    com.together.profiler: DEBUG
