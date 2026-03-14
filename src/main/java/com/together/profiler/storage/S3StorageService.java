@@ -77,7 +77,8 @@ public class S3StorageService {
         log.info("S3StorageService initialized. Endpoint: {}, Bucket: {}", endpoint, bucket);
     }
 
-    // ── Загрузить файл и вернуть публичный URL ──────────────────────────────
+    // ── Загрузить файл и вернуть S3-ключ (не URL) ───────────────────────────
+    // Ключ затем используется в getPublicUrl() — это надёжнее чем разбирать URL обратно
     public String upload(MultipartFile file, String folder) throws IOException {
         String key = buildKey(folder, file.getOriginalFilename());
 
@@ -92,7 +93,7 @@ public class S3StorageService {
         );
 
         log.debug("Uploaded file to S3: {}", key);
-        return extractKeyFromUrl(key);
+        return key;  // возвращаем ключ, а не URL
     }
 
     // ── Получить presigned URL для загрузки прямо с фронта ─────────────────
@@ -110,7 +111,7 @@ public class S3StorageService {
                 .build();
 
         String uploadUrl = presigner.presignPutObject(presignRequest).url().toString();
-        String publicUrl = extractKeyFromUrl(key);
+        String publicUrl = buildPublicUrl(key);
 
         log.debug("Generated presigned URL for key: {}", key);
         return new PresignedUploadResult(key, uploadUrl, publicUrl);
@@ -131,7 +132,14 @@ public class S3StorageService {
 
     // ── Получить публичный URL по ключу ─────────────────────────────────────
     public String getPublicUrl(String s3Key) {
-        return extractKeyFromUrl(s3Key);
+        return buildPublicUrl(s3Key);
+    }
+
+    // ── Извлечь S3-ключ из публичного URL ───────────────────────────────────
+    // URL вида: http://localhost:9000/idea-hub/ideas/123/uuid.jpg
+    public String extractKeyFromUrl(String url) {
+        String prefix = endpoint + "/" + bucket + "/";
+        return url.startsWith(prefix) ? url.substring(prefix.length()) : url;
     }
 
     // ── Внутренние хелперы ──────────────────────────────────────────────────
@@ -143,11 +151,8 @@ public class S3StorageService {
         return folder + "/" + UUID.randomUUID() + ext;
     }
 
-    // Из публичного URL извлекает S3 ключ
-    public String extractKeyFromUrl(String url) {
-        // URL вида: http://localhost:9000/idea-hub/ideas/123/uuid.jpg
-        // После bucket идёт '/' и потом ключ
-        return url.substring(url.indexOf(bucket) + bucket.length() + 1);
+    private String buildPublicUrl(String key) {
+        return endpoint + "/" + bucket + "/" + key;
     }
 
     private void ensureBucketExists() {
