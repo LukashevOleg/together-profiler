@@ -25,6 +25,13 @@ public class ProfileController {
         return ResponseEntity.ok(profileService.getMyProfile(userId, phone));
     }
 
+    // GET /api/profile/{userId} — публичный профиль (для партнёра), телефон не возвращается
+    @GetMapping("/{userId}")
+    public ResponseEntity<ProfileDto.Response> getProfileByUserId(
+            @PathVariable Long userId) {
+        return ResponseEntity.ok(profileService.getProfileByUserId(userId));
+    }
+
     // PUT /api/profile/me
     @PutMapping("/me")
     public ResponseEntity<ProfileDto.Response> updateProfile(

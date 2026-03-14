@@ -24,13 +24,21 @@ import java.util.stream.Collectors;
 public class ProfileService {
 
     private final UserProfileRepository profileRepository;
-    private final S3StorageService storageService;
+    private final S3StorageService         storageService;
 
     // ── GET /profile/me ─────────────────────────────────────────────────────
     @Transactional(readOnly = true)
     public ProfileDto.Response getMyProfile(Long userId, String phone) {
         UserProfile profile = findOrCreate(userId);
         return toResponse(profile, phone);
+    }
+
+    /** Публичный профиль по userId — для просмотра профиля партнёра. Телефон не возвращается. */
+    @Transactional(readOnly = true)
+    public ProfileDto.Response getProfileByUserId(Long userId) {
+        UserProfile profile = profileRepository.findByUserId(userId)
+                .orElseThrow(() -> new NotFoundException("Profile not found"));
+        return toResponse(profile, null); // phone = null — не показываем чужой телефон
     }
 
     // ── PUT /profile/me ─────────────────────────────────────────────────────
